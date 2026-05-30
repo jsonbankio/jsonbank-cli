@@ -23,8 +23,9 @@ type Keys struct {
 
 // Config is what the CLI persists in its memory directory.
 type Config struct {
-	Host string `json:"host"`
-	Keys Keys   `json:"keys"`
+	Host     string          `json:"host"`
+	Keys     Keys            `json:"keys"`     // active account's keys (what the SDK uses)
+	Accounts map[string]Keys `json:"accounts"` // all saved accounts, keyed by username
 }
 
 // App is the initialized CLI context.
@@ -63,8 +64,10 @@ func (a *App) ConfigPath() string {
 // Save writes the current config back to the memory directory.
 func (a *App) Save() error {
 	// Keys often pick up stray whitespace when copy-pasted; trim before saving.
-	a.Config.Keys.Public = strings.TrimSpace(a.Config.Keys.Public)
-	a.Config.Keys.Private = strings.TrimSpace(a.Config.Keys.Private)
+	a.Config.Keys = trimKeys(a.Config.Keys)
+	for username, k := range a.Config.Accounts {
+		a.Config.Accounts[username] = trimKeys(k)
+	}
 
 	data, err := json.MarshalIndent(a.Config, "", "  ")
 	if err != nil {
@@ -72,6 +75,47 @@ func (a *App) Save() error {
 	}
 	// 0600 — the file can hold a private key.
 	return os.WriteFile(a.ConfigPath(), data, 0o600)
+}
+
+// ActiveUsername returns the username of the account whose keys are currently
+// active, or "" if none of the stored accounts matches.
+func (c *Config) ActiveUsername() string {
+	if c.Keys == (Keys{}) {
+		return ""
+	}
+	for username, k := range c.Accounts {
+		if k == c.Keys {
+			return username
+		}
+	}
+	return ""
+}
+
+// Activate makes the named account's keys the active ones.
+func (c *Config) Activate(username string) {
+	c.Keys = c.Accounts[username]
+}
+
+// RemoveAccount deletes an account. If it was the active one, the active keys
+// are cleared too. Returns false if the account did not exist.
+func (c *Config) RemoveAccount(username string) bool {
+	k, ok := c.Accounts[username]
+	if !ok {
+		return false
+	}
+	delete(c.Accounts, username)
+	if k == c.Keys {
+		c.Keys = Keys{}
+	}
+	return true
+}
+
+// trimKeys returns a copy of k with surrounding whitespace removed from each key.
+func trimKeys(k Keys) Keys {
+	return Keys{
+		Public:  strings.TrimSpace(k.Public),
+		Private: strings.TrimSpace(k.Private),
+	}
 }
 
 // memoryDir returns the CLI's config directory, creating it if needed.
@@ -89,7 +133,7 @@ func memoryDir() (string, error) {
 
 // loadConfig reads config.json, returning a fresh default if none exists.
 func loadConfig(path string) (*Config, error) {
-	cfg := &Config{Host: DefaultHost}
+	cfg := &Config{Host: DefaultHost, Accounts: map[string]Keys{}}
 
 	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
@@ -104,6 +148,9 @@ func loadConfig(path string) (*Config, error) {
 	}
 	if cfg.Host == "" {
 		cfg.Host = DefaultHost
+	}
+	if cfg.Accounts == nil {
+		cfg.Accounts = map[string]Keys{}
 	}
 	return cfg, nil
 }
