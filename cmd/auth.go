@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"bufio"
+	"errors"
 	"fmt"
-	"os"
 	"strings"
 
+	"github.com/charmbracelet/huh"
 	jsonbank "github.com/jsonbankio/go-sdk"
 	"github.com/spf13/cobra"
 
@@ -40,34 +40,52 @@ func init() {
 	rootCmd.AddCommand(authCmd)
 }
 
+const (
+	modePublic = "public"
+	modeBoth   = "both"
+)
+
 func runAuthLogin(cmd *cobra.Command, args []string) error {
 	a, err := app.Init()
 	if err != nil {
 		return err
 	}
 
-	in := bufio.NewReader(os.Stdin)
+	mode := modePublic
+	var pub, prv string
 
-	fmt.Println("How would you like to log in?")
-	fmt.Println("  1) Public key only")
-	fmt.Println("  2) Public and private key")
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("How would you like to log in?").
+				Options(
+					huh.NewOption("Public key only", modePublic),
+					huh.NewOption("Public and private key", modeBoth),
+				).
+				Value(&mode),
+		),
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Public key").
+				Value(&pub).
+				Validate(required),
+		),
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Private key").
+				EchoMode(huh.EchoModeNone). // hide the secret entirely
+				Value(&prv).
+				Validate(required),
+		).WithHideFunc(func() bool { return mode != modeBoth }),
+	)
 
-	var choice string
-	for {
-		choice = ask(in, "Select [1-2]: ")
-		if choice == "1" || choice == "2" {
-			break
-		}
-		fmt.Println("Please enter 1 or 2.")
+	if err := form.Run(); err != nil {
+		return err
 	}
 
-	keys := app.Keys{Public: ask(in, "Public key: ")}
-	if choice == "2" {
-		keys.Private = ask(in, "Private key: ")
-	}
-
-	if keys.Public == "" {
-		return fmt.Errorf("a public key is required")
+	keys := app.Keys{Public: strings.TrimSpace(pub)}
+	if mode == modeBoth {
+		keys.Private = strings.TrimSpace(prv)
 	}
 
 	a.Config.Keys = keys
@@ -75,7 +93,7 @@ func runAuthLogin(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("Saved. You are now logged in.\nConfig: %s\n", a.ConfigPath())
+	fmt.Println("Saved. You are now logged in.")
 	return nil
 }
 
@@ -126,9 +144,10 @@ func runAuthWhoami(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// ask prints a prompt and reads a trimmed line from the reader.
-func ask(r *bufio.Reader, prompt string) string {
-	fmt.Print(prompt)
-	line, _ := r.ReadString('\n')
-	return strings.TrimSpace(line)
+// required is a huh validator that rejects blank input.
+func required(s string) error {
+	if strings.TrimSpace(s) == "" {
+		return errors.New("this field is required")
+	}
+	return nil
 }
