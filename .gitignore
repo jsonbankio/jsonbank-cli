@@ -1,0 +1,12 @@
+# Compiled binary
+/jsb
+
+# Test & coverage artifacts
+*.out
+*.test
+
+# OS / editor cruft
+.DS_Store
+.idea
+.vscode
+.claude
