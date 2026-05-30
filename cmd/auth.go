@@ -83,9 +83,9 @@ func runAuthLogin(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	keys := app.Keys{Public: strings.TrimSpace(pub)}
+	keys := app.Keys{Public: pub}
 	if mode == modeBoth {
-		keys.Private = strings.TrimSpace(prv)
+		keys.Private = prv
 	}
 
 	a.Config.Keys = keys

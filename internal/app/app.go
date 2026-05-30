@@ -7,6 +7,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // DefaultHost is the JSONBank API the CLI talks to unless overridden.
@@ -61,6 +62,10 @@ func (a *App) ConfigPath() string {
 
 // Save writes the current config back to the memory directory.
 func (a *App) Save() error {
+	// Keys often pick up stray whitespace when copy-pasted; trim before saving.
+	a.Config.Keys.Public = strings.TrimSpace(a.Config.Keys.Public)
+	a.Config.Keys.Private = strings.TrimSpace(a.Config.Keys.Private)
+
 	data, err := json.MarshalIndent(a.Config, "", "  ")
 	if err != nil {
 		return err
