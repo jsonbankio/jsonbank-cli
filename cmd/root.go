@@ -16,6 +16,8 @@ var rootCmd = &cobra.Command{
 	Short:   "JSONBank CLI",
 	Long:    "jsb is the command-line interface for JSONBank — store, fetch, and manage JSON documents.",
 	Version: version,
+	// Don't print usage after a runtime error (only the error itself).
+	SilenceUsage: true,
 	// Drop cobra's auto-generated `completion` command.
 	CompletionOptions: cobra.CompletionOptions{DisableDefaultCmd: true},
 }

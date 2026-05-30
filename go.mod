@@ -2,7 +2,10 @@ module jsb-cli
 
 go 1.26
 
-require github.com/spf13/cobra v1.10.2
+require (
+	github.com/jsonbankio/go-sdk v0.1.10
+	github.com/spf13/cobra v1.10.2
+)
 
 require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
