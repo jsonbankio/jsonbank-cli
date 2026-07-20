@@ -46,15 +46,22 @@ var fileMetaCmd = &cobra.Command{
 
 var fileMetaRaw bool
 
+var fileUpdateCmd = &cobra.Command{
+	Use:   "update <idOrPath> <file>",
+	Short: "Update a document from a local JSON file",
+	Args:  cobra.ExactArgs(2),
+	RunE:  runFileUpdate,
+}
+
 func init() {
 	fileMetaCmd.Flags().BoolVar(&fileMetaRaw, "raw", false, "print the metadata as raw JSON instead of a formatted summary")
 
-	fileCmd.AddCommand(fileViewCmd, fileDownloadCmd, fileMetaCmd)
+	fileCmd.AddCommand(fileViewCmd, fileDownloadCmd, fileMetaCmd, fileUpdateCmd)
 	rootCmd.AddCommand(fileCmd)
 }
 
 func runFileView(cmd *cobra.Command, args []string) error {
-	jsb, err := authedClient()
+	jsb, _, err := authedClient()
 	if err != nil {
 		return err
 	}
@@ -70,7 +77,7 @@ func runFileView(cmd *cobra.Command, args []string) error {
 }
 
 func runFileDownload(cmd *cobra.Command, args []string) error {
-	jsb, err := authedClient()
+	jsb, _, err := authedClient()
 	if err != nil {
 		return err
 	}
@@ -91,7 +98,7 @@ func runFileDownload(cmd *cobra.Command, args []string) error {
 }
 
 func runFileMeta(cmd *cobra.Command, args []string) error {
-	jsb, err := authedClient()
+	jsb, _, err := authedClient()
 	if err != nil {
 		return err
 	}
@@ -115,24 +122,58 @@ func runFileMeta(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// authedClient initializes the app and returns an SDK client built from the
-// active keys (environment or saved account). It errors when no keys are set.
-func authedClient() (*jsonbank.Instance, error) {
+func runFileUpdate(cmd *cobra.Command, args []string) error {
+	jsb, keys, err := authedClient()
+	if err != nil {
+		return err
+	}
+	if keys.Private == "" {
+		return fmt.Errorf("this action needs a private key — run: jsb auth login and choose public + private")
+	}
+
+	target := cleanPath(args[0])
+	file := args[1]
+
+	content, err := os.ReadFile(file)
+	if err != nil {
+		return fmt.Errorf("could not read %s: %w", file, err)
+	}
+	if !json.Valid(content) {
+		return fmt.Errorf("%s is not valid JSON", file)
+	}
+
+	updated, reqErr := jsb.UpdateOwnDocument(target, string(content))
+	if reqErr != nil {
+		return fmt.Errorf("could not update %q: %s", target, reqErr.Message)
+	}
+
+	if updated.Changed {
+		fmt.Printf("Updated %s from %s\n", target, file)
+	} else {
+		fmt.Printf("No changes — %s already matches %s\n", target, file)
+	}
+	return nil
+}
+
+// authedClient initializes the app and returns an SDK client along with the
+// resolved active keys (environment or saved account). It errors when no keys
+// are set.
+func authedClient() (*jsonbank.Instance, app.Keys, error) {
 	a, err := app.Init()
 	if err != nil {
-		return nil, err
+		return nil, app.Keys{}, err
 	}
 
 	keys := a.ActiveKeys()
 	if keys.Public == "" {
-		return nil, fmt.Errorf("you are not logged in — run: jsb auth login")
+		return nil, app.Keys{}, fmt.Errorf("you are not logged in — run: jsb auth login")
 	}
 
 	jsb := jsonbank.Init(jsonbank.Config{
 		Host: a.Config.Host,
 		Keys: jsonbank.Keys{Public: keys.Public, Private: keys.Private},
 	})
-	return &jsb, nil
+	return &jsb, keys, nil
 }
 
 // cleanPath strips surrounding slashes; a leading "/" would otherwise become an
