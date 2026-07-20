@@ -77,6 +77,17 @@ func (a *App) Save() error {
 	return os.WriteFile(a.ConfigPath(), data, 0o600)
 }
 
+// ActiveKeys returns the keys to authenticate with. Environment variables
+// override the saved active account, so CI can supply keys without a login step.
+func (a *App) ActiveKeys() Keys {
+	pub := strings.TrimSpace(os.Getenv("JSB_PUBLIC_KEY"))
+	prv := strings.TrimSpace(os.Getenv("JSB_PRIVATE_KEY"))
+	if pub != "" || prv != "" {
+		return Keys{Public: pub, Private: prv}
+	}
+	return a.Config.Keys
+}
+
 // ActiveUsername returns the username of the account whose keys are currently
 // active, or "" if none of the stored accounts matches.
 func (c *Config) ActiveUsername() string {

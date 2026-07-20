@@ -184,11 +184,12 @@ func runAuthWhoami(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if a.Config.Keys.Public == "" {
+	keys := a.ActiveKeys()
+	if keys.Public == "" {
 		return fmt.Errorf("you are not logged in — run: jsb auth login")
 	}
 
-	username, err := resolveUsername(a.Config.Host, a.Config.Keys)
+	username, err := resolveUsername(a.Config.Host, keys)
 	if err != nil {
 		return err
 	}
