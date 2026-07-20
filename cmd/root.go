@@ -14,7 +14,7 @@ var version = "0.1.0"
 var rootCmd = &cobra.Command{
 	Use:     "jsb",
 	Short:   "JSONBank CLI",
-	Long:    "jsb is the command-line interface for JSONBank — store, fetch, and manage JSON documents.",
+	Long:    "Command-line interface for JSONBank — store, fetch, and manage JSON documents.",
 	Version: version,
 	// Don't print usage after a runtime error (only the error itself).
 	SilenceUsage: true,

@@ -73,7 +73,7 @@ func (a *App) Save() error {
 	if err != nil {
 		return err
 	}
-	// 0600 — the file can hold a private key.
+	// 0600: the file holds secret keys — keep it owner-only.
 	return os.WriteFile(a.ConfigPath(), data, 0o600)
 }
 
