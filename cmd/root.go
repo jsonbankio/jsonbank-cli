@@ -8,7 +8,7 @@ import (
 
 // version is the CLI version. Override at build time with:
 //
-//	-ldflags "-X jsb-cli/cmd.version=x.y.z"
+//	-ldflags "-X github.com/jsonbankio/jsonbank-cli/cmd.version=x.y.z"
 var version = "0.1.0"
 
 var rootCmd = &cobra.Command{

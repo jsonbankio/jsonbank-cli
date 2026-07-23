@@ -9,7 +9,7 @@ import (
 	jsonbank "github.com/jsonbankio/go-sdk"
 	"github.com/spf13/cobra"
 
-	"jsb-cli/internal/app"
+	"github.com/jsonbankio/jsonbank-cli/internal/app"
 )
 
 var authCmd = &cobra.Command{

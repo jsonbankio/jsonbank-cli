@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tidwall/pretty"
 
-	"jsb-cli/internal/app"
+	"github.com/jsonbankio/jsonbank-cli/internal/app"
 )
 
 var fileCmd = &cobra.Command{

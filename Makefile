@@ -3,11 +3,11 @@ BIN ?= $(shell go env GOPATH)/bin
 .PHONY: build run test install clean
 
 build:
-	go build -o jsb .
+	go build -o jsb ./cmd/jsb
 
 # make run ARGS="hello"
 run:
-	go run . $(ARGS)
+	go run ./cmd/jsb $(ARGS)
 
 test:
 	go test ./...

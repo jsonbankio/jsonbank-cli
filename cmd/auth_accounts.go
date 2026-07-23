@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 
-	"jsb-cli/internal/app"
+	"github.com/jsonbankio/jsonbank-cli/internal/app"
 )
 
 var authSwitchCmd = &cobra.Command{

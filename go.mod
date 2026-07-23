@@ -1,4 +1,4 @@
-module jsb-cli
+module github.com/jsonbankio/jsonbank-cli
 
 go 1.26
 
