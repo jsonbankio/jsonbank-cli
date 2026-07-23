@@ -1,0 +1,66 @@
+version: 2
+
+project_name: jsonbank-cli
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: jsb
+    main: ./cmd/jsb
+    binary: jsb
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/jsonbankio/jsonbank-cli/cmd.version={{ .Version }}
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - id: jsb
+    formats: [tar.gz]
+    name_template: "jsb_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    # Windows users expect a zip.
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+release:
+  github:
+    owner: jsonbankio
+    name: jsonbank-cli
+
+# Homebrew cask, pushed to the jsonbankio/homebrew-tap repo on each release.
+homebrew_casks:
+  - name: jsb
+    repository:
+      owner: jsonbankio
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    homepage: https://github.com/jsonbankio/jsonbank-cli
+    description: Command-line interface for JSONBank — store, fetch, and manage JSON documents.
+    # The binary is unsigned, so macOS quarantines it on download. Strip the
+    # quarantine attribute after install so `jsb` runs without a Gatekeeper prompt.
+    hooks:
+      post:
+        install: |
+          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/jsb"]
+          end

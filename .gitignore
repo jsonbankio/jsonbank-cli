@@ -11,3 +11,5 @@
 .vscode
 .claude
 CLAUDE.MD
+# GoReleaser build output
+/dist/
