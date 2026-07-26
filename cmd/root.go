@@ -2,20 +2,34 @@ package cmd
 
 import (
 	"os"
+	"runtime/debug"
 
 	"github.com/spf13/cobra"
 )
 
-// version is the CLI version. Override at build time with:
+// version is set at release time via:
 //
 //	-ldflags "-X github.com/jsonbankio/jsonbank-cli/cmd.version=x.y.z"
-var version = "0.1.0"
+//
+// When empty, resolveVersion falls back to the module version Go stamps
+// into the binary, so `go install ...@vX.Y.Z` builds report correctly.
+var version = ""
+
+func resolveVersion() string {
+	if version != "" {
+		return version
+	}
+	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "(devel)" && info.Main.Version != "" {
+		return info.Main.Version
+	}
+	return "dev"
+}
 
 var rootCmd = &cobra.Command{
 	Use:     "jsb",
 	Short:   "JSONBank CLI",
 	Long:    "Command-line interface for JSONBank — store, fetch, and manage JSON documents.",
-	Version: version,
+	Version: resolveVersion(),
 	// Don't print usage after a runtime error (only the error itself).
 	SilenceUsage: true,
 	// Drop cobra's auto-generated `completion` command.
