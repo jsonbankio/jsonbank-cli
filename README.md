@@ -20,6 +20,12 @@ go install github.com/jsonbankio/jsonbank-cli/cmd/jsb@latest
 
 Prebuilt binaries for macOS, Linux, and Windows are on the [releases page](https://github.com/jsonbankio/jsonbank-cli/releases).
 
+To install directly on a server (no Go required), download, extract, and move onto your `PATH` in one line — swap in the latest version and your architecture (`amd64` or `arm64`):
+
+```sh
+curl -sL https://github.com/jsonbankio/jsonbank-cli/releases/download/v0.1.1/jsb_0.1.1_linux_amd64.tar.gz | tar -xz jsb && sudo mv jsb /usr/local/bin/
+```
+
 ## Usage
 
 Log in with your JSONBank API keys, then work with files:
