@@ -55,6 +55,38 @@ jsb auth accounts remove <username>
 
 Run `jsb --help` or `jsb <command> --help` for details on any command.
 
+## CI
+
+`jsb` reads API keys from the environment when they are set:
+
+```sh
+JSB_PUBLIC_KEY=...
+JSB_PRIVATE_KEY=...
+```
+
+These take priority over any saved account, so CI needs no `jsb auth login` step — set the variables and run commands directly. If either variable is set, both keys come from the environment; saved keys are ignored entirely.
+
+Example — a GitHub Actions job that pushes a JSON file to JSONBank:
+
+```yaml
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      JSB_PUBLIC_KEY: ${{ secrets.JSB_PUBLIC_KEY }}
+      JSB_PRIVATE_KEY: ${{ secrets.JSB_PRIVATE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jsb
+        run: |
+          curl -sL https://github.com/jsonbankio/jsonbank-cli/releases/download/v0.1.1/jsb_0.1.1_linux_amd64.tar.gz | tar -xz jsb
+          sudo mv jsb /usr/local/bin/
+
+      - name: Push data to JSONBank
+        run: jsb file update project/data.json data.json
+```
+
 ## Development
 
 ```sh
